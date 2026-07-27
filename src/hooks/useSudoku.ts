@@ -1,5 +1,4 @@
-// src/hooks/useSudoku.ts
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Difficulty, GameState } from "@/types/sudoku";
 import { fetchSudoku } from "@/services/api";
 import stringToSudokuGridMapper from "@/helpers/stringToSudokuGridMapper";
@@ -93,10 +92,48 @@ export function useSudoku() {
     });
   }, []);
 
+  const clearCell = useCallback(() => {
+    setGameState((prev) => {
+      if (prev.status !== "playing" || !prev.selectedCell) return prev;
+
+      const { row, col } = prev.selectedCell;
+      const targetCell = prev.grid[row][col];
+
+      if (targetCell.isFixed) return prev;
+
+      const newGrid = prev.grid.map((r) => [...r]);
+      newGrid[row][col] = {
+        ...targetCell,
+        value: 0,
+        isError: false,
+      };
+
+      return { ...prev, grid: newGrid };
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      if (e.key >= "1" && e.key <= "9") {
+        inputNumber(parseInt(e.key));
+      } else if (e.key === "Backspace" || e.key === "Delete") {
+        clearCell();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Avoid memory leaks
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [inputNumber, clearCell]);
+
   return {
     gameState,
     startNewGame,
     selectCell,
-    inputNumber
+    inputNumber,
+    clearCell,
   };
 }
