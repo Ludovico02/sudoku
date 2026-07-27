@@ -16,14 +16,14 @@ export default function GamePanel({
   return (
     <div className="flex items-center justify-between w-full max-w-sm sm:max-w-md mb-4 px-2 text-lg">
       <div className="text-gray-600 font-medium capitalize">
-        Difficoltà:{" "}
+        Difficulty:{" "}
         <span className="font-semibold text-gray-800">{difficulty}</span>
       </div>
 
       <div
         className={`font-bold transition-colors duration-300 ${isDanger ? "text-red-600" : "text-gray-800"}`}
       >
-        Errori: {mistakes} / {maxMistakes}
+        Mistakes: {mistakes} / {maxMistakes}
       </div>
     </div>
   );
