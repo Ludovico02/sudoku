@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client";
 
 import { useSudoku } from "@/hooks/useSudoku";
@@ -41,7 +40,13 @@ export default function Home() {
 
             <div className="relative w-full max-w-sm sm:max-w-md md:max-w-lg mx-auto">
               <div
-                className={`w-full transition-opacity duration-500 ${gameState.status === "game-over" ? "opacity-30 pointer-events-none" : ""}`}
+                className={`
+                  w-full transition-opacity duration-500 
+                  ${gameState.status === "game-over" || gameState.status === "won" 
+                    ? "opacity-30 pointer-events-none" 
+                    : ""
+                  }`
+                }
               >
                 <Board
                   grid={gameState.grid}
@@ -50,6 +55,7 @@ export default function Home() {
                 />
               </div>
 
+              {/* OVERLAY GAME OVER */}
               {gameState.status === "game-over" && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
                   <div className="bg-white/95 p-6 sm:p-8 rounded-xl shadow-2xl text-center border-2 border-red-200 mx-4">
@@ -63,14 +69,34 @@ export default function Home() {
                       onClick={() => startNewGame(gameState.difficulty)}
                       className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transform transition active:scale-95"
                     >
-                      Try Again!
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* OVERLAY VITTORIA */}
+              {gameState.status === "won" && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                  <div className="bg-white/95 p-6 sm:p-8 rounded-xl shadow-2xl text-center border-2 border-green-200 mx-4">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-green-600 mb-4">
+                      You Won! 🎉
+                    </h2>
+                    <p className="text-gray-700 mb-6 font-medium">
+                      You successfully completed the game.
+                    </p>
+                    <button
+                      onClick={() => startNewGame("medium")}
+                      className="px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md transform transition active:scale-95"
+                    >
+                      Play Again
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {gameState.status !== "game-over" && (
+            {gameState.status === "playing" && (
               <Numpad
                 onInput={inputNumber}
                 onClear={clearCell}
