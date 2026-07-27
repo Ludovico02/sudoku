@@ -33,6 +33,20 @@ export function useSudoku() {
 
       const initialGrid = stringToSudokuGridMapper(data.puzzle, data.solution);
 
+      // DEV ONLY Victory test
+      initialGrid.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+          if (rowIndex === 0 && colIndex === 0) {
+            cell.value = 0; // Lascia vuota
+            cell.isFixed = false;
+          } else {
+            cell.value = cell.solutionValue; // Inserisci la soluzione
+            cell.isFixed = true; // Blocca la cella
+          }
+        });
+      });
+      // END
+
       setGameState({
         grid: initialGrid,
         difficulty,
@@ -64,24 +78,31 @@ export function useSudoku() {
       const { row, col } = prev.selectedCell;
       const targetCell = prev.grid[row][col];
 
-      // If it's correct already refuse the input
       if (targetCell.value === targetCell.solutionValue) return prev;
 
-      // Check if input is correct
       const isCorrect = number === targetCell.solutionValue;
-
       const newGrid = prev.grid.map((r) => [...r]);
 
       newGrid[row][col] = {
         ...targetCell,
         value: number,
-        isError: !isCorrect, // If input is incorrect show the error
+        isError: !isCorrect,
       };
 
       const newMistakes = isCorrect ? prev.mistakes : prev.mistakes + 1;
-      const newStatus = newMistakes >= 3 ? "game-over" : "playing";
 
-      // TODO Check if user has won
+      let newStatus: GameState["status"] = prev.status;
+
+      if (newMistakes >= 3) {
+        newStatus = "game-over";
+      } else if (isCorrect) {
+        const isBoardFull = newGrid.every((row) =>
+          row.every((cell) => cell.value !== 0 && !cell.isError),
+        );
+        if (isBoardFull) {
+          newStatus = "won";
+        }
+      }
 
       return {
         ...prev,
