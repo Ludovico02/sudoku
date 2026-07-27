@@ -15,6 +15,11 @@ export interface CellState {
   isError: boolean;
 }
 
+export interface CellPosition {
+  row: number;
+  col: number;
+}
+
 export type SudokuGrid = CellState[][];
 
 export interface GameState {
@@ -22,4 +27,5 @@ export interface GameState {
   difficulty: Difficulty;
   status: "idle" | "loading" | "playing" | "won" | "game-over" | "mistakes";
   mistakes: number;
+  selectedCell: CellPosition | null;
 }
