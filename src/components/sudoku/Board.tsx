@@ -1,4 +1,3 @@
-// src/components/sudoku/Board.tsx
 import { CellPosition, SudokuGrid } from "@/types/sudoku";
 import Cell from "./Cell";
 
