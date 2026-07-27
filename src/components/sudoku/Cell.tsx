@@ -2,10 +2,11 @@ import { CellState } from "@/types/sudoku";
 
 interface CellProps {
   cell: CellState;
+  isSelected: boolean;
   onClick?: () => void;
 }
 
-export default function Cell({ cell, onClick }: CellProps) {
+export default function Cell({ cell, isSelected, onClick }: CellProps) {
   const isThickBorderRight = cell.col === 2 || cell.col === 5;
   const isThickBorderBottom = cell.row === 2 || cell.row === 5;
 
@@ -23,6 +24,7 @@ export default function Cell({ cell, onClick }: CellProps) {
           : "bg-white text-blue-600 cursor-pointer hover:bg-blue-50"
         }
         ${cell.isError ? "bg-red-100 text-red-600 font-semibold" : ""}
+        ${isSelected && !cell.isFixed ? 'ring-2 ring-inset ring-blue-500 bg-blue-100' : ''}
       `}
     >
       {cell.value !== 0 ? cell.value : ""}
