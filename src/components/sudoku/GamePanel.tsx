@@ -1,15 +1,17 @@
-import { Difficulty } from "@/types/sudoku";
+import { Difficulty, GameMode } from "@/types/sudoku";
 
 interface GamePanelProps {
   mistakes: number;
   maxMistakes: number;
   difficulty: Difficulty;
+  gameMode: GameMode;
 }
 
 export default function GamePanel({
   mistakes,
   maxMistakes,
   difficulty,
+  gameMode,
 }: GamePanelProps) {
   const isDanger = mistakes >= maxMistakes - 1;
 
@@ -20,11 +22,15 @@ export default function GamePanel({
         <span className="font-semibold text-gray-800">{difficulty}</span>
       </div>
 
-      <div
-        className={`font-bold transition-colors duration-300 ${isDanger ? "text-red-600" : "text-gray-800"}`}
-      >
-        Mistakes: {mistakes} / {maxMistakes}
-      </div>
+      {gameMode === "assisted" ? (
+        <div
+          className={`font-bold transition-colors duration-300 ${isDanger ? "text-red-600" : "text-gray-800"}`}
+        >
+          Mistakes: {mistakes} / {maxMistakes}
+        </div>
+      ) : (
+        <div className="font-bold">Classic Mode</div>
+      )}
     </div>
   );
 }

@@ -22,10 +22,14 @@ export interface CellPosition {
 
 export type SudokuGrid = CellState[][];
 
+export type GameMode = "assisted" | "classic";
+
 export interface GameState {
   grid: SudokuGrid;
   difficulty: Difficulty;
   status: "idle" | "loading" | "playing" | "won" | "game-over" | "mistakes";
   mistakes: number;
   selectedCell: CellPosition | null;
+  maxMistakes: number;
+  gameMode: GameMode;
 }

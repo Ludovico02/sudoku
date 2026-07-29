@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Difficulty, GameState } from "@/types/sudoku";
+import { Difficulty, GameMode, GameState } from "@/types/sudoku";
 import { fetchSudoku } from "@/services/api";
 import stringToSudokuGridMapper from "@/helpers/stringToSudokuGridMapper";
 
@@ -10,11 +10,13 @@ export function useSudoku() {
     status: "idle",
     mistakes: 0,
     selectedCell: null,
+    maxMistakes: 3,
+    gameMode: "assisted"
   });
 
   const requestIdRef = useRef(0);
 
-  const startNewGame = useCallback(async (difficulty: Difficulty) => {
+  const startNewGame = useCallback(async (difficulty: Difficulty, maxMistakes: number, gameMode: GameMode) => {
     const currentRequestId = ++requestIdRef.current;
 
     setGameState((prev) => ({
@@ -22,6 +24,8 @@ export function useSudoku() {
       status: "loading",
       difficulty,
       selectedCell: null,
+      maxMistakes,
+      gameMode
     }));
 
     try {
@@ -34,17 +38,17 @@ export function useSudoku() {
       const initialGrid = stringToSudokuGridMapper(data.puzzle, data.solution);
 
       // DEV ONLY Victory test
-      initialGrid.forEach((row, rowIndex) => {
-        row.forEach((cell, colIndex) => {
-          if (rowIndex === 0 && colIndex === 0) {
-            cell.value = 0; // Lascia vuota
-            cell.isFixed = false;
-          } else {
-            cell.value = cell.solutionValue; // Inserisci la soluzione
-            cell.isFixed = true; // Blocca la cella
-          }
-        });
-      });
+      // initialGrid.forEach((row, rowIndex) => {
+      //   row.forEach((cell, colIndex) => {
+      //     if (rowIndex === 0 && colIndex === 0) {
+      //       cell.value = 0; // Lascia vuota
+      //       cell.isFixed = false;
+      //     } else {
+      //       cell.value = cell.solutionValue; // Inserisci la soluzione
+      //       cell.isFixed = true; // Blocca la cella
+      //     }
+      //   });
+      // });
       // END
 
       setGameState({
@@ -53,6 +57,8 @@ export function useSudoku() {
         status: "playing",
         mistakes: 0,
         selectedCell: null,
+        maxMistakes,
+        gameMode
       });
     } catch (error) {
       setGameState((prev) => ({ ...prev, status: "idle" }));
@@ -60,6 +66,13 @@ export function useSudoku() {
       console.error("Error while fetching data in useSudoku:", error);
       // Handle how error is shown to the user
     }
+  }, []);
+
+  const giveUp = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      status: "idle"
+    }));
   }, []);
 
   const selectCell = useCallback((row: number, col: number) => {
@@ -78,7 +91,11 @@ export function useSudoku() {
       const { row, col } = prev.selectedCell;
       const targetCell = prev.grid[row][col];
 
-      if (targetCell.value === targetCell.solutionValue) return prev;
+      const isAssisted = prev.gameMode === "assisted";
+
+      if (isAssisted && targetCell.value === targetCell.solutionValue) return prev;
+
+      if (targetCell.value === number) return prev;
 
       const isCorrect = number === targetCell.solutionValue;
       const newGrid = prev.grid.map((r) => [...r]);
@@ -86,19 +103,23 @@ export function useSudoku() {
       newGrid[row][col] = {
         ...targetCell,
         value: number,
-        isError: !isCorrect,
+
+        // In classic mode error are not shown
+        isError: isAssisted ? !isCorrect : false,
       };
 
       const newMistakes = isCorrect ? prev.mistakes : prev.mistakes + 1;
 
       let newStatus: GameState["status"] = prev.status;
 
-      if (newMistakes >= 3) {
+      if (isAssisted && newMistakes >= prev.maxMistakes) {
         newStatus = "game-over";
-      } else if (isCorrect) {
+      } 
+      else {
         const isBoardFull = newGrid.every((row) =>
           row.every((cell) => cell.value !== 0 && !cell.isError),
         );
+
         if (isBoardFull) {
           newStatus = "won";
         }
@@ -156,5 +177,6 @@ export function useSudoku() {
     selectCell,
     inputNumber,
     clearCell,
+    giveUp
   };
 }
