@@ -11,68 +11,111 @@ export function useSudoku() {
     mistakes: 0,
     selectedCell: null,
     maxMistakes: 3,
-    gameMode: "assisted"
+    gameMode: "assisted",
+    showTimer: true,
   });
 
   const requestIdRef = useRef(0);
 
-  const startNewGame = useCallback(async (difficulty: Difficulty, maxMistakes: number, gameMode: GameMode) => {
-    const currentRequestId = ++requestIdRef.current;
+  const startNewGame = useCallback(
+    async (
+      difficulty: Difficulty,
+      maxMistakes: number,
+      gameMode: GameMode,
+      showTimer: boolean,
+    ) => {
+      const currentRequestId = ++requestIdRef.current;
 
+      setGameState((prev) => ({
+        ...prev,
+        status: "loading",
+        difficulty,
+        selectedCell: null,
+        maxMistakes,
+        gameMode,
+        showTimer,
+      }));
+
+      try {
+        const data = await fetchSudoku(difficulty);
+
+        // Handling race conditions between multiple requests
+        // User might select different difficulties
+        if (currentRequestId !== requestIdRef.current) return;
+
+        const initialGrid = stringToSudokuGridMapper(
+          data.puzzle,
+          data.solution,
+        );
+
+        // DEV ONLY Victory test
+        // initialGrid.forEach((row, rowIndex) => {
+        //   row.forEach((cell, colIndex) => {
+        //     if (rowIndex === 0 && colIndex === 0) {
+        //       cell.value = 0;
+        //       cell.isFixed = false;
+        //     } else {
+        //       cell.value = cell.solutionValue;
+        //       cell.isFixed = true;
+        //     }
+        //   });
+        // });
+        // END
+
+        setGameState({
+          grid: initialGrid,
+          difficulty,
+          status: "playing",
+          mistakes: 0,
+          selectedCell: null,
+          maxMistakes,
+          gameMode,
+          showTimer,
+        });
+      } catch (error) {
+        setGameState((prev) => ({ ...prev, status: "idle" }));
+
+        console.error("Error while fetching data in useSudoku:", error);
+        // Handle how error is shown to the user
+      }
+    },
+    [],
+  );
+
+  const giveUp = useCallback(() => {
     setGameState((prev) => ({
       ...prev,
-      status: "loading",
-      difficulty,
-      selectedCell: null,
-      maxMistakes,
-      gameMode
+      status: "idle",
     }));
+  }, []);
 
-    try {
-      const data = await fetchSudoku(difficulty);
+  const solveGame = useCallback(() => {
+    setGameState((prev) => {
+      if (prev.status === "idle" || prev.status === "loading") return prev;
+      return {
+        ...prev,
+        status: "game-over",
+        selectedCell: null,
+        grid: prev.grid.map((r) =>
+          r.map((c) => ({ ...c, value: c.solutionValue, isError: false })),
+        ),
+      };
+    });
+  }, []);
 
-      // Handling race conditions between multiple requests
-      // User might select different difficulties
-      if (currentRequestId !== requestIdRef.current) return;
-
-      const initialGrid = stringToSudokuGridMapper(data.puzzle, data.solution);
-
-      // DEV ONLY Victory test
-      // initialGrid.forEach((row, rowIndex) => {
-      //   row.forEach((cell, colIndex) => {
-      //     if (rowIndex === 0 && colIndex === 0) {
-      //       cell.value = 0; // Lascia vuota
-      //       cell.isFixed = false;
-      //     } else {
-      //       cell.value = cell.solutionValue; // Inserisci la soluzione
-      //       cell.isFixed = true; // Blocca la cella
-      //     }
-      //   });
-      // });
-      // END
-
-      setGameState({
-        grid: initialGrid,
-        difficulty,
+  const resetGame = useCallback(() => {
+    setGameState((prev) => {
+      if (prev.status === "idle" || prev.status === "loading") return prev;
+      return {
+        ...prev,
         status: "playing",
         mistakes: 0,
         selectedCell: null,
-        maxMistakes,
-        gameMode
-      });
-    } catch (error) {
-      setGameState((prev) => ({ ...prev, status: "idle" }));
-
-      console.error("Error while fetching data in useSudoku:", error);
-      // Handle how error is shown to the user
-    }
-  }, []);
-
-  const giveUp = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      status: "idle"
-    }));
+        grid: prev.grid.map((r) =>
+          r.map((c) => (c.isFixed ? c : { ...c, value: 0, isError: false })),
+        ),
+      };
+    });
   }, []);
 
   const selectCell = useCallback((row: number, col: number) => {
@@ -93,7 +136,8 @@ export function useSudoku() {
 
       const isAssisted = prev.gameMode === "assisted";
 
-      if (isAssisted && targetCell.value === targetCell.solutionValue) return prev;
+      if (isAssisted && targetCell.value === targetCell.solutionValue)
+        return prev;
 
       if (targetCell.value === number) return prev;
 
@@ -114,8 +158,7 @@ export function useSudoku() {
 
       if (isAssisted && newMistakes >= prev.maxMistakes) {
         newStatus = "game-over";
-      } 
-      else {
+      } else {
         const isBoardFull = newGrid.every((row) =>
           row.every((cell) => cell.value !== 0 && !cell.isError),
         );
@@ -177,6 +220,8 @@ export function useSudoku() {
     selectCell,
     inputNumber,
     clearCell,
-    giveUp
+    giveUp,
+    solveGame,
+    resetGame
   };
 }
