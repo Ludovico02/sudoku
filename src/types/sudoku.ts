@@ -32,4 +32,5 @@ export interface GameState {
   selectedCell: CellPosition | null;
   maxMistakes: number;
   gameMode: GameMode;
+  showTimer: boolean;
 }
