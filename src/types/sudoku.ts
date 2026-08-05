@@ -13,6 +13,7 @@ export interface CellState {
   solutionValue: number;
   value: number;
   isError: boolean;
+  notes: number[];
 }
 
 export interface CellPosition {
@@ -33,4 +34,6 @@ export interface GameState {
   maxMistakes: number;
   gameMode: GameMode;
   showTimer: boolean;
+  inputMode: "normal" | "notes";
+  highlightedNumber: number | null;
 }
