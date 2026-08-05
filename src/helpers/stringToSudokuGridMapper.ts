@@ -26,6 +26,7 @@ export default function stringToSudokuGridMapper(
         solutionValue,
         isFixed: value !== 0,
         isError: false,
+        notes: []
       });
     }
 
