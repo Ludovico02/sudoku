@@ -2,11 +2,35 @@
 
 My aim is to build a sudoku web app without any ads. It all started when I was playing on a mobile app and fell in love with the game. Problem was: too many ads! I tried different apps and ad free websites but none of them had my favorite feature: a button that automatically writes all the notes...
 
+## Tech Stack
+
+- Framework: Nextjs & React
+- Language: Typescript
+- Styling: TailwindCSS
+- State Management: Custom React Hooks
+
 ## API
 
 I found online the [youdosudoku](https://www.youdosudoku.com/) API which is completely free and easy to use, it also allows you to choose the difficulty between easy, medium and hard.
 
 Credits to the original creator: [kevinstewartmercurio](https://www.kevinstewartmercurio.com/)
+
+## Key Features
+
+- Dual Game Modes:
+  - Assisted Mode: Real-time error validation with immediate visual feedback
+  - Classic Mode: Unassisted experience where players must rely on their own logic
+
+- QoL Mechanics:
+  - Smart Notes (Pencil Marks): Fully functional 3x3 mini-grid within empty cells to track possible numbers.
+  - Auto-fill Notes: A time-saving algorithm that calculates and populates all valid possibilities for the remaining empty cells.
+  - Dynamic Highlighting: Clicking a cell automatically highlights all identical numbers across the board, as well as its corresponding "peers" (row, column, 3x3 quadrant)
+
+- Responsive UI implemented mobile first
+
+## Architecture & Design Decisions
+
+![Empty Sudoku Board](assets/sudokuBoardEmpty.png)
 
 <hr>
 
