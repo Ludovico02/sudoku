@@ -13,6 +13,8 @@ export function useSudoku() {
     maxMistakes: 3,
     gameMode: "assisted",
     showTimer: true,
+    inputMode: "normal",
+    highlightedNumber: null,
   });
 
   const requestIdRef = useRef(0);
@@ -71,6 +73,8 @@ export function useSudoku() {
           maxMistakes,
           gameMode,
           showTimer,
+          inputMode: "normal",
+          highlightedNumber: null,
         });
       } catch (error) {
         setGameState((prev) => ({ ...prev, status: "idle" }));
@@ -121,9 +125,55 @@ export function useSudoku() {
   const selectCell = useCallback((row: number, col: number) => {
     setGameState((prev) => {
       if (prev.status !== "playing") return prev;
-      if (prev.grid[row][col].isFixed) return prev;
 
-      return { ...prev, selectedCell: { row, col } };
+      // Number we will highlight
+      const cellValue = prev.grid[row][col].value;
+
+      return {
+        ...prev,
+        selectedCell: { row, col },
+        highlightedNumber: cellValue !== 0 ? cellValue : null,
+      };
+    });
+  }, []);
+
+  const toggleInputMode = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      inputMode: prev.inputMode === "normal" ? "notes" : "normal",
+    }));
+  }, []);
+
+  const autoFillNotes = useCallback(() => {
+    setGameState((prev) => {
+      if (prev.status !== "playing") return prev;
+
+      const newGrid = prev.grid.map((row, rIdx) =>
+        row.map((cell, cIdx) => {
+          if (cell.value !== 0) return cell;
+
+          const used = new Set();
+          for (let i = 0; i < 9; i++) {
+            used.add(prev.grid[rIdx][i].value);
+            used.add(prev.grid[i][cIdx].value);
+          }
+
+          const startRow = Math.floor(rIdx / 3) * 3;
+          const startCol = Math.floor(cIdx / 3) * 3;
+          for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+              used.add(prev.grid[startRow + i][startCol + j].value);
+            }
+          }
+
+          const possibleNotes = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(
+            (n) => !used.has(n),
+          );
+          return { ...cell, notes: possibleNotes };
+        }),
+      );
+
+      return { ...prev, grid: newGrid };
     });
   }, []);
 
@@ -134,23 +184,63 @@ export function useSudoku() {
       const { row, col } = prev.selectedCell;
       const targetCell = prev.grid[row][col];
 
+      if (targetCell.isFixed) return prev;
+
       const isAssisted = prev.gameMode === "assisted";
 
       if (isAssisted && targetCell.value === targetCell.solutionValue)
         return prev;
 
+      if (prev.inputMode === "notes") {
+        if (targetCell.value !== 0) return prev;
+
+        const hasNote = targetCell.notes.includes(number);
+        const newNotes = hasNote
+          ? targetCell.notes.filter((n) => n !== number)
+          : [...targetCell.notes, number].sort();
+
+        const newGrid = prev.grid.map((r, rIdx) =>
+          r.map((c, cIdx) =>
+            rIdx === row && cIdx === col ? { ...c, notes: newNotes } : c,
+          ),
+        );
+
+        return { ...prev, grid: newGrid, highlightedNumber: number };
+      }
+
       if (targetCell.value === number) return prev;
 
       const isCorrect = number === targetCell.solutionValue;
-      const newGrid = prev.grid.map((r) => [...r]);
+      const isErrorNow = isAssisted ? !isCorrect : false;
 
-      newGrid[row][col] = {
-        ...targetCell,
-        value: number,
+      const newGrid = prev.grid.map((r, rIdx) =>
+        r.map((c, cIdx) => {
+          if (rIdx === row && cIdx === col) {
+            return {
+              ...targetCell,
+              value: number,
+              isError: isErrorNow,
+              notes: [],
+            };
+          }
 
-        // In classic mode error are not shown
-        isError: isAssisted ? !isCorrect : false,
-      };
+          // Deletes notes only if an error is not shown
+          // So in classic mode wether the number is a mistake or not
+          // Relative numbers in notes are deleted
+          if (!isErrorNow) {
+            const isPeer =
+              rIdx === row ||
+              cIdx === col ||
+              (Math.floor(rIdx / 3) === Math.floor(row / 3) &&
+                Math.floor(cIdx / 3) === Math.floor(col / 3));
+            if (isPeer && c.notes.includes(number)) {
+              return { ...c, notes: c.notes.filter((n) => n !== number) };
+            }
+          }
+
+          return c;
+        }),
+      );
 
       const newMistakes = isCorrect ? prev.mistakes : prev.mistakes + 1;
 
@@ -160,7 +250,9 @@ export function useSudoku() {
         newStatus = "game-over";
       } else {
         const isBoardFull = newGrid.every((row) =>
-          row.every((cell) => cell.value !== 0 && !cell.isError),
+          row.every(
+            (cell) => cell.value !== 0 && cell.value === cell.solutionValue,
+          ),
         );
 
         if (isBoardFull) {
@@ -173,6 +265,7 @@ export function useSudoku() {
         grid: newGrid,
         mistakes: newMistakes,
         status: newStatus,
+        highlightedNumber: number,
       };
     });
   }, []);
@@ -222,6 +315,8 @@ export function useSudoku() {
     clearCell,
     giveUp,
     solveGame,
-    resetGame
+    resetGame,
+    toggleInputMode,
+    autoFillNotes,
   };
 }
