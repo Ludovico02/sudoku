@@ -17,8 +17,7 @@ export default function Board({
   if (!grid || grid.length === 0) return null;
 
   return (
-    // The container manages max-width for responsiveness and forces a perfect square
-    <div className="w-full max-w-sm sm:max-w-md md:max-w-lg mx-auto aspect-square shadow-xl">
+    <div className="w-full aspect-square shadow-xl mx-auto">
       {/* The actual 9x9 CSS grid with a thick outer border */}
       <div className="grid grid-cols-9 w-full h-full border-2 border-gray-800 bg-white">
         {grid.map((row, rowIndex) =>
@@ -33,6 +32,7 @@ export default function Board({
               Math.floor(selectedCell.col / 3) === Math.floor(colIndex / 3);
             const isPeer =
               selectedCell !== null && (sameRow || sameCol || sameQuadrant);
+            
             return (
               <Cell
                 key={`cell-${rowIndex}-${colIndex}`}
