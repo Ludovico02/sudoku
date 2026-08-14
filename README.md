@@ -2,47 +2,86 @@
 
 My aim is to build a sudoku web app without any ads. It all started when I was playing on a mobile app and fell in love with the game. Problem was: too many ads! I tried different apps and ad free websites but none of them had my favorite feature: a button that automatically writes all the notes...
 
+## Tech Stack
+
+- **Framework**: Next.js & React
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: Custom React Hooks
+
 ## API
 
 I found online the [youdosudoku](https://www.youdosudoku.com/) API which is completely free and easy to use, it also allows you to choose the difficulty between easy, medium and hard.
 
-Credits to the original creator: [kevinstewartmercurio](https://www.kevinstewartmercurio.com/)
+Credits to the original creator of the API: [kevinstewartmercurio](https://www.kevinstewartmercurio.com/)
 
-<hr>
+## Key Features
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+- **Dual Game Modes**:
+  - **Assisted Mode**: Real-time error validation with immediate visual feedback
+  - **Classic Mode**: Unassisted experience where players must rely on their own logic
 
-## Getting Started
+- **QoL Mechanics**:
+  - **Smart Notes** (Pencil Marks): Fully functional 3x3 mini-grid within empty cells to track possible numbers.
+  - **Auto-fill Notes**: A time-saving algorithm that calculates and populates all valid possibilities for the remaining empty cells.
+  - **Dynamic Highlighting**: Clicking a cell automatically highlights all identical numbers across the board, as well as its corresponding "peers" (row, column, 3x3 quadrant)
 
-First, run the development server:
+- **Fully Responsive UI:** The grid and surrounding layout were implemented with a mobile-first approach, utilizing CSS Grid and dynamic max-widths to ensure a perfect aspect ratio on any device.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Architecture & Design Decisions
+
+### 1. Zero-Latency Client-Side Engine
+To guarantee immediate tactical feedback (under 16ms per interaction), the core game engine is entirely decoupled from the server once the initial puzzle is fetched. All move validations, note filtering, and win-state calculations are processed locally on the client using a centralized custom hook (`useSudoku`).
+
+### 2. Centralized State Management over Global Stores
+For an application of this scope, relying on external state management libraries like Redux would introduce unnecessary boilerplate. Instead, the application relies on native React state colocation. The overarching `GameState` is hoisted to the highest level component (`page.tsx`), passing down necessary props and callbacks. This keeps individual components (like `Board` and `Cell`) pure, functional, and completely unaware of the global context.
+
+### 3. Derived State for UI Rendering
+Instead of cluttering the React state with active UI properties (e.g., "is this cell currently highlighted?"), visual cues are calculated dynamically during the render phase. For example, the `Board` component calculates mathematical relations on the fly (`Math.floor(rowIndex / 3) === Math.floor(selectedCell.row / 3)`) to instantly determine if a cell belongs to the active 3x3 quadrant, passing a simple boolean to the child component.
+
+### 4. Conflict-Free Tailwind Styling
+The `Cell` component utilizes a strict JavaScript-based priority system for applying CSS classes (e.g., *Error > Selected > Highlighted Value > Peer > Fixed*). This prevents Tailwind class collisions and ensures the UI always communicates the most critical game state to the player without ever relying on `!important` CSS overrides.
+
+## Future Development
+
+The current version provides a polished single-player frontend experience, but the architecture was designed with future scaling in mind. Upcoming developments include:
+
+- **Backend Infrastructure**: Transitioning to a Full Stack architecture using Next.js Route Handlers to validate puzzle solutions securely on the server.
+
+- **Database Integration**: Connecting Convex and Clerk to have a quick database and an authentication service setup used to store user accounts, match histories, and implement global leaderboards for fastest completion times.
+
+- **Progressive Web App**: Enhancing the application to be installable on mobile devices with offline capabilities, allowing players to solve Sudoku on airplanes or commutes without an internet connection.
+
+## Play locally on PC
+
+As of the current state of the application it can only be run locally on the dev server.
+
+To run this project locally on your machine and test the code, ensure you have [Node.js](https://nodejs.org/) installed, then follow these steps:
+
+1. Clone the repository 
+
+``` bash
+git clone https://github.com/Ludovico02/sudoku.git
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Navigate to the directory
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+``` bash
+cd sudoku
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Install the dependencies
 
-## Learn More
+``` bash
+npm install
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Run the development server
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+``` bash
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5. Play the game on
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[http://localhost:3000](http://localhost:3000)
