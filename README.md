@@ -2,6 +2,10 @@
 
 My aim is to build a sudoku web app without any ads. It all started when I was playing on a mobile app and fell in love with the game. Problem was: too many ads! I tried different apps and ad free websites but none of them had my favorite feature: a button that automatically writes all the notes...
 
+Example on mobile:
+
+<img src="assets/sudokumobile.png" height="700px" alt="Screenshot of sudoku on mobile">
+
 ## Tech Stack
 
 - **Framework**: Next.js & React
