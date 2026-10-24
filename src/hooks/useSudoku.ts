@@ -77,10 +77,14 @@ export function useSudoku() {
           highlightedNumber: null,
         });
       } catch (error) {
+        if (currentRequestId !== requestIdRef.current) return;
+        
         setGameState((prev) => ({ ...prev, status: "idle" }));
 
         console.error("Error while fetching data in useSudoku:", error);
         // Handle how error is shown to the user
+
+        window.alert("Failed to generate Sudoku grid. Please try again later.");
       }
     },
     [],
